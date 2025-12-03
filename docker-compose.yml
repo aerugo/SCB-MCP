@@ -1,0 +1,54 @@
+# ============================================================================
+# SCB MCP Server - Docker Compose Configuration
+# ============================================================================
+# Production: docker-compose up -d scb-mcp
+# Development: docker-compose --profile dev up scb-mcp-dev
+# ============================================================================
+
+services:
+  # --------------------------------------------------------------------------
+  # Production Service
+  # --------------------------------------------------------------------------
+  scb-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: scb-mcp
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MCP_TRANSPORT=http
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Development Service
+  # --------------------------------------------------------------------------
+  scb-mcp-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: scb-mcp-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - MCP_TRANSPORT=http
+      - PORT=3000
+      - DEBUG=true
+    volumes:
+      - ./src:/app/src:ro
+      - ./package.json:/app/package.json:ro
+    command: ["npm", "run", "dev"]
+    profiles:
+      - dev
+    restart: unless-stopped
